@@ -1,0 +1,40 @@
+# Use Python 3.12 slim image
+FROM python:3.12-slim
+
+# Set working directory
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy consolidated requirements
+COPY requirements.txt .
+
+# Install Python dependencies
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy API type directories
+COPY apis/ ./apis/
+
+# Copy the main API server files
+COPY base_api.py .
+COPY api_server.py .
+
+# Create auth directory
+RUN mkdir -p /app/auth
+
+# Expose port
+EXPOSE 8081
+
+# Set environment variables
+ENV PYTHONPATH=/app
+ENV FLASK_ENV=production
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:8081/health || exit 1
+
+# Run the API server
+CMD ["python", "api_server.py"]

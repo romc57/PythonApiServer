@@ -1,0 +1,62 @@
+# Environment variables
+.env
+*.env
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+venv/
+env/
+ENV/
+.cursor/
+
+# Authentication data
+auth/
+*.json
+!auth/*.example
+!auth/*.json.example
+
+# Google API specific
+google_tokens.json
+google_credentials.json
+
+# WhatsApp Personal API specific
+whatsapp_personal_session.json
+whatsapp_personal.json
+
+# Meta APIs specific
+facebook_tokens.json
+instagram_tokens.json
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log

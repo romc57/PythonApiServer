@@ -1,0 +1,25 @@
+version: '3.8'
+
+services:
+  api-server:
+    build: .
+    container_name: api-server
+    ports:
+      - "8081:8081"
+    volumes:
+      # Mount auth directory to persist tokens
+      - ./auth:/app/auth
+      # Mount API type directories for development (optional)
+      - ./apis:/app/apis
+      # Mount local-data directory for Files API
+      - ./local-data:/app/local-data
+    environment:
+      - PYTHONPATH=/app
+      - FLASK_ENV=production
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
