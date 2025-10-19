@@ -24,6 +24,9 @@ class BaseAPI(ABC):
         self._tokens = self._load_tokens()
         self.session = requests.Session()
         self._setup_session()
+        
+        # Try to restore authentication on startup
+        self._try_restore_authentication()
     
     def _get_tokens_file_path(self) -> Path:
         """Get path to tokens file."""
@@ -48,6 +51,93 @@ class BaseAPI(ABC):
                 json.dump(self._tokens, f, indent=2)
         except Exception as e:
             print(f"Warning: Could not save tokens: {e}")
+    
+    def _try_restore_authentication(self) -> None:
+        """Try to restore authentication on startup."""
+        try:
+            if not self._tokens:
+                print(f"ℹ️ {self.service_name}: No saved tokens found")
+                return
+            
+            # Check if we have an access token
+            access_token = self._tokens.get('access_token')
+            if not access_token:
+                print(f"ℹ️ {self.service_name}: No access token found")
+                return
+            
+            # Check if token is expired
+            expires_at = self._tokens.get('expires_at', 0)
+            current_time = time.time()
+            
+            if current_time >= expires_at - 300:  # Token expired or expires in 5 minutes
+                print(f"🔄 {self.service_name}: Token expired, attempting refresh...")
+                
+                # Try to refresh the token
+                if self._refresh_token():
+                    print(f"✅ {self.service_name}: Token refreshed successfully!")
+                else:
+                    print(f"⚠️ {self.service_name}: Token refresh failed, attempting automatic re-authentication...")
+                    
+                    # For Spotify, try automatic re-authentication
+                    if self.service_name == 'spotify':
+                        self._try_automatic_spotify_auth()
+                    else:
+                        # Clear invalid tokens for other services
+                        self._tokens = {}
+                        self._save_tokens()
+            else:
+                print(f"✅ {self.service_name}: Valid token found, authentication restored!")
+                
+        except Exception as e:
+            print(f"Warning: Could not restore {self.service_name} authentication: {e}")
+            # Clear potentially corrupted tokens
+            self._tokens = {}
+            self._save_tokens()
+    
+    def _try_automatic_spotify_auth(self) -> None:
+        """Try to automatically re-authenticate Spotify using stored credentials."""
+        try:
+            print(f"🔄 {self.service_name}: Attempting automatic Spotify re-authentication...")
+            
+            # Use the same logic as the auth button - generate auth URL and redirect
+            # But since we can't redirect in a background process, we'll simulate the OAuth flow
+            # by checking if we can get a new token using client credentials flow
+            
+            # Try client credentials flow first (if supported)
+            data = {
+                'grant_type': 'client_credentials',
+                'client_id': self.client_id,
+                'client_secret': self.client_secret
+            }
+            
+            try:
+                response = self.session.post(self.token_url, data=data, timeout=30)
+                if response.status_code == 200:
+                    token_data = response.json()
+                    self._tokens.update({
+                        'access_token': token_data.get('access_token'),
+                        'expires_in': token_data.get('expires_in'),
+                        'token_type': token_data.get('token_type', 'Bearer'),
+                        'expires_at': time.time() + token_data.get('expires_in', 3600)
+                    })
+                    self._save_tokens()
+                    print(f"✅ {self.service_name}: Automatic authentication successful!")
+                    return
+            except:
+                pass
+            
+            # If client credentials doesn't work, we need user authorization
+            print(f"⚠️ {self.service_name}: Automatic authentication failed - user authorization required")
+            print(f"🔗 Please visit: {self.get_auth_url()}")
+            
+            # Clear invalid tokens
+            self._tokens = {}
+            self._save_tokens()
+            
+        except Exception as e:
+            print(f"Error in automatic Spotify authentication: {e}")
+            self._tokens = {}
+            self._save_tokens()
     
     def _setup_session(self) -> None:
         """Setup requests session with default headers."""
@@ -244,6 +334,17 @@ class BaseAPI(ABC):
             return value
         except (ValueError, TypeError):
             return default_value
+    
+    def _validate_required_param(self, param_name: str) -> str:
+        """Validate required parameter."""
+        try:
+            from flask import request
+            value = request.args.get(param_name) or (request.json.get(param_name) if request.is_json else None)
+            if not value:
+                raise ValueError(f"Missing required parameter: {param_name}")
+            return str(value)
+        except (ValueError, TypeError) as e:
+            raise ValueError(f"Invalid parameter {param_name}: {e}")
     
     def _load_credentials(self, service_name: str) -> Dict[str, str]:
         """Load service credentials."""

@@ -55,7 +55,9 @@ class GoogleAPI(BaseAPI):
                 "method": "GET",
                 "description": "Search YouTube videos",
                 "handler": self.search_youtube,
-                "params": ["q"]
+                "params": {
+                    "q": "Required: Search query for YouTube videos"
+                }
             }
         }
     

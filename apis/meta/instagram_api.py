@@ -44,13 +44,17 @@ class InstagramAPI(BaseMetaAPI):
                 "method": "GET",
                 "description": "Get details of a specific media",
                 "handler": self.get_media_details,
-                "params": ["media_id"]
+                "params": {
+                    "media_id": "Required: Instagram media ID"
+                }
             },
             "media-children": {
                 "method": "GET",
                 "description": "Get children of a media (for carousel posts)",
                 "handler": self.get_media_children,
-                "params": ["media_id"]
+                "params": {
+                    "media_id": "Required: Instagram media ID"
+                }
             },
             "long-lived-token": {
                 "method": "POST",
@@ -66,19 +70,26 @@ class InstagramAPI(BaseMetaAPI):
                 "method": "GET",
                 "description": "Get media by hashtag",
                 "handler": self.get_hashtag_media,
-                "params": ["hashtag"]
+                "params": {
+                    "hashtag": "Required: Hashtag name (without #)"
+                }
             },
             "user-media-by-date": {
                 "method": "GET",
                 "description": "Get user media by date range",
                 "handler": self.get_media_by_date,
-                "params": ["since", "until"]
+                "params": {
+                    "since": "Required: Start date (YYYY-MM-DD)",
+                    "until": "Required: End date (YYYY-MM-DD)"
+                }
             },
             "media-insights": {
                 "method": "GET",
                 "description": "Get media insights (if available)",
                 "handler": self.get_media_insights,
-                "params": ["media_id"]
+                "params": {
+                    "media_id": "Required: Instagram media ID"
+                }
             }
         }
     
@@ -92,17 +103,6 @@ class InstagramAPI(BaseMetaAPI):
             "color": "#E4405F",
             **service_urls
         }
-    
-    def _validate_required_param(self, param_name: str) -> str:
-        """Validate required parameter."""
-        try:
-            from flask import request
-            value = request.args.get(param_name) or request.json.get(param_name) if request.is_json else None
-            if not value:
-                raise ValueError(f"Missing required parameter: {param_name}")
-            return str(value)
-        except (ValueError, TypeError) as e:
-            raise ValueError(f"Invalid parameter {param_name}: {e}")
     
     # Instagram-specific methods
     def get_profile(self) -> Dict[str, Any]:

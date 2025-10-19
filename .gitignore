@@ -60,3 +60,24 @@ Thumbs.db
 
 # Logs
 *.log
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+coverage.xml
+*.cover
+.hypothesis/
+
+# Test artifacts
+tests/fixtures/auth/
+tests/fixtures/local-data/
+test-results/
+test-reports/
+
+# MyPy
+.mypy_cache/
+.dmypy.json
+dmypy.json

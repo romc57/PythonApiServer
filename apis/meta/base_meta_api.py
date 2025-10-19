@@ -20,6 +20,9 @@ class BaseMetaAPI(ABC):
         self._tokens = self._load_tokens()
         self.session = requests.Session()
         self._setup_session()
+        
+        # Try to restore authentication on startup
+        self._try_restore_authentication()
     
     def _get_tokens_file_path(self) -> Path:
         """Get path to tokens file."""
@@ -44,6 +47,43 @@ class BaseMetaAPI(ABC):
                 json.dump(self._tokens, f, indent=2)
         except Exception as e:
             print(f"Warning: Could not save tokens: {e}")
+    
+    def _try_restore_authentication(self) -> None:
+        """Try to restore authentication on startup."""
+        try:
+            if not self._tokens:
+                print(f"ℹ️ {self.service_name}: No saved tokens found")
+                return
+            
+            # Check if we have an access token
+            access_token = self._tokens.get('access_token')
+            if not access_token:
+                print(f"ℹ️ {self.service_name}: No access token found")
+                return
+            
+            # Check if token is expired
+            expires_at = self._tokens.get('expires_at', 0)
+            current_time = time.time()
+            
+            if current_time >= expires_at - 300:  # Token expired or expires in 5 minutes
+                print(f"🔄 {self.service_name}: Token expired, attempting refresh...")
+                
+                # Try to refresh the token
+                if self._refresh_token():
+                    print(f"✅ {self.service_name}: Token refreshed successfully!")
+                else:
+                    print(f"⚠️ {self.service_name}: Token refresh failed, need to re-authenticate")
+                    # Clear invalid tokens
+                    self._tokens = {}
+                    self._save_tokens()
+            else:
+                print(f"✅ {self.service_name}: Valid token found, authentication restored!")
+                
+        except Exception as e:
+            print(f"Warning: Could not restore {self.service_name} authentication: {e}")
+            # Clear potentially corrupted tokens
+            self._tokens = {}
+            self._save_tokens()
     
     def _setup_session(self) -> None:
         """Setup requests session with default headers."""
@@ -118,6 +158,42 @@ class BaseMetaAPI(ABC):
         """Check if API is authenticated."""
         return bool(self.get_access_token())
     
+    def _refresh_token(self) -> bool:
+        """Refresh access token using refresh token."""
+        refresh_token = self._tokens.get('refresh_token')
+        if not refresh_token:
+            return False
+        
+        data = {
+            'client_id': self.app_id,
+            'client_secret': self.app_secret,
+            'refresh_token': refresh_token,
+            'grant_type': 'refresh_token'
+        }
+        
+        try:
+            response = self.session.post(
+                f'https://graph.facebook.com/{self.api_version}/oauth/access_token',
+                data=data,
+                timeout=30
+            )
+            response.raise_for_status()
+            
+            token_data = response.json()
+            self._tokens.update({
+                'access_token': token_data.get('access_token'),
+                'expires_in': token_data.get('expires_in'),
+                'token_type': token_data.get('token_type', 'Bearer'),
+                'expires_at': time.time() + token_data.get('expires_in', 3600)
+            })
+            
+            self._save_tokens()
+            return True
+            
+        except requests.exceptions.RequestException as e:
+            print(f"Error refreshing token: {e}")
+            return False
+    
     def _get_headers(self) -> Dict[str, str]:
         """Get headers with current access token."""
         access_token = self.get_access_token()
@@ -166,6 +242,17 @@ class BaseMetaAPI(ABC):
             return value
         except (ValueError, TypeError):
             return default_value
+    
+    def _validate_required_param(self, param_name: str) -> str:
+        """Validate required parameter."""
+        try:
+            from flask import request
+            value = request.args.get(param_name) or (request.json.get(param_name) if request.is_json else None)
+            if not value:
+                raise ValueError(f"Missing required parameter: {param_name}")
+            return str(value)
+        except (ValueError, TypeError) as e:
+            raise ValueError(f"Invalid parameter {param_name}: {e}")
     
     def _get_request_json(self) -> Dict[str, Any]:
         """Get request JSON data."""

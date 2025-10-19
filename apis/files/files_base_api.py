@@ -24,50 +24,50 @@ class FilesBaseAPI:
                 "method": "GET",
                 "description": "List all files in local-data directory",
                 "handler": self.list_files,
-                "parameters": {
-                    "extension": "Optional file extension filter (e.g., '.txt')"
+                "params": {
+                    "extension": "Optional: File extension filter (e.g., '.txt')"
                 }
             },
             "read": {
                 "method": "GET", 
                 "description": "Read content of a specific file",
                 "handler": self.read_file,
-                "parameters": {
-                    "filename": "Name of the file to read"
+                "params": {
+                    "filename": "Required: Name of the file to read"
                 }
             },
             "create": {
                 "method": "POST",
                 "description": "Create a new file with content",
                 "handler": self.create_file,
-                "parameters": {
-                    "filename": "Name of the file to create",
-                    "content": "Content to write to the file"
+                "params": {
+                    "filename": "Required: Name of the file to create",
+                    "content": "Required: Content to write to the file"
                 }
             },
             "update": {
                 "method": "PUT",
                 "description": "Update content of an existing file",
                 "handler": self.update_file,
-                "parameters": {
-                    "filename": "Name of the file to update",
-                    "content": "New content for the file"
+                "params": {
+                    "filename": "Required: Name of the file to update",
+                    "content": "Required: New content for the file"
                 }
             },
             "delete": {
                 "method": "DELETE",
                 "description": "Delete a file",
                 "handler": self.delete_file,
-                "parameters": {
-                    "filename": "Name of the file to delete"
+                "params": {
+                    "filename": "Required: Name of the file to delete"
                 }
             },
             "search": {
                 "method": "GET",
                 "description": "Search for files containing specific text",
                 "handler": self.search_files,
-                "parameters": {
-                    "query": "Text to search for in files"
+                "params": {
+                    "query": "Required: Text to search for in files"
                 }
             },
             "stats": {
@@ -103,6 +103,14 @@ class FilesBaseAPI:
     def get_access_token(self) -> str:
         """Get access token."""
         return "local_access"  # No token required
+    
+    def get_status(self) -> Dict[str, Any]:
+        """Get service status."""
+        return {
+            "service": self.service_name,
+            "authenticated": self.is_authenticated(),
+            "status": "ready" if self.is_authenticated() else "not_authenticated"
+        }
     
     # API endpoint handlers
     def list_files(self, extension: str = None) -> Dict[str, Any]:

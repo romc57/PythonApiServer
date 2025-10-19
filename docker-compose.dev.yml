@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  api-server:
+    # Override for development with GUI support
+    environment:
+      - PYTHONPATH=/app
+      - FLASK_ENV=development
+      - DISPLAY=${DISPLAY:-:0}
+    volumes:
+      # Mount X11 socket for GUI support (Linux only)
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+      # Mount auth directory to persist tokens
+      - ./auth:/app/auth
+      # Mount API type directories for development
+      - ./apis:/app/apis
+      # Mount local-data directory for Files API
+      - ./local-data:/app/local-data
+      # Mount main server file for development
+      - ./api_server.py:/app/api_server.py
+      - ./base_api.py:/app/base_api.py
+    # Enable GUI support
+    privileged: true
+    shm_size: 2gb
+    # Allow access to host display
+    network_mode: host

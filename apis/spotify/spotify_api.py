@@ -56,7 +56,9 @@ class SpotifyAPI(BaseAPI):
                 "method": "GET",
                 "description": "Search music",
                 "handler": self.search,
-                "params": ["q"]
+                "params": {
+                    "q": "Required: Search query (artist, track, album name)"
+                }
             },
             "playback/next": {
                 "method": "POST",

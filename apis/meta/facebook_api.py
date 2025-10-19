@@ -52,19 +52,26 @@ class FacebookAPI(BaseMetaAPI):
                 "method": "GET",
                 "description": "Get posts from a specific page",
                 "handler": self.get_page_posts,
-                "params": ["page_id"]
+                "params": {
+                    "page_id": "Required: Facebook page ID"
+                }
             },
             "create-post": {
                 "method": "POST",
                 "description": "Create a new post",
                 "handler": self.create_post,
-                "params": ["message"]
+                "params": {
+                    "message": "Required: Post content"
+                }
             },
             "create-photo": {
                 "method": "POST",
                 "description": "Upload a photo",
                 "handler": self.create_photo,
-                "params": ["url", "message"]
+                "params": {
+                    "url": "Required: Photo URL",
+                    "message": "Optional: Photo caption"
+                }
             },
             "groups": {
                 "method": "GET",
@@ -100,7 +107,9 @@ class FacebookAPI(BaseMetaAPI):
                 "method": "GET",
                 "description": "Get photos from an album",
                 "handler": self.get_album_photos,
-                "params": ["album_id"]
+                "params": {
+                    "album_id": "Required: Facebook album ID"
+                }
             }
         }
     
@@ -114,17 +123,6 @@ class FacebookAPI(BaseMetaAPI):
             "color": "#1877f2",
             **service_urls
         }
-    
-    def _validate_required_param(self, param_name: str) -> str:
-        """Validate required parameter."""
-        try:
-            from flask import request
-            value = request.args.get(param_name) or request.json.get(param_name) if request.is_json else None
-            if not value:
-                raise ValueError(f"Missing required parameter: {param_name}")
-            return str(value)
-        except (ValueError, TypeError) as e:
-            raise ValueError(f"Invalid parameter {param_name}: {e}")
     
     # Facebook-specific methods
     def get_profile(self) -> Dict[str, Any]:

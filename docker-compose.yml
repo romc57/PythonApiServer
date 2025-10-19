@@ -13,10 +13,20 @@ services:
       - ./apis:/app/apis
       # Mount local-data directory for Files API
       - ./local-data:/app/local-data
+      # Mount main server file for development
+      - ./api_server.py:/app/api_server.py
+      - ./base_api.py:/app/base_api.py
+      # Mount WhatsApp Chrome profile for persistent sessions
     environment:
       - PYTHONPATH=/app
       - FLASK_ENV=production
+      - DISPLAY=:99
+      - CHROME_BIN=/usr/bin/google-chrome
+      - CHROME_PATH=/usr/bin/google-chrome
     restart: unless-stopped
+    # Enable GUI support for WhatsApp Web
+    privileged: true
+    shm_size: 2gb
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8081/health"]
       interval: 30s
