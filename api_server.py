@@ -95,27 +95,6 @@ def setup_routes():
         """Health check endpoint."""
         return jsonify(get_health_status())
     
-    @app.route('/test-token-exchange')
-    def test_token_exchange():
-        """Test token exchange manually."""
-        try:
-            # Use the same code that worked in our manual test
-            test_code = "AQDO5H50htPkCMNn4K2vYpLmcQ8PcJ95UJu8zXVOsKs-g-SyNL8XBSmKybEva7gZmBWM9XIDuwkFMg1SKgVvU-kMbDJLbi8mkeWhRQ1NpJETHu5AQUlBonNZpPaEFPaE3lzxGI2p_MD4AJvC9JrodhhTmv5C0xQKnJQMP7nJxVFuKwhZk_SVBsLiTe3BlChQyZbCdHuVOpODB5qS7T0cJtPJDh7jn_70_P58UfYQ7lP1OJTAmpBA2QtmjdwyKSM-XE86rihvuvy371bS2eIqgI-XzER1lYwGwIsQYHO5davjopCCimtSgrk_VfASYVmbT3XllE-CSt2mcHcettu-uueeVzyN8sHyONEw4soeP9XgMrKwKFbigb23OH_Q9tjyFzCFofolWpUBQzalv4AhW0IDdBWAQDsEC_tNtSX0Etzjr6BMYmhyTmVYWD1xG5VsB2u1Ax-_pWl4rb8N-85mwtqt6gNuGj6Wq9agtHqgaEAbVw"
-            
-            print(f"Testing token exchange with code: {test_code[:20]}...")
-            result = services['spotify'].handle_callback(test_code)
-            print(f"Token exchange result: {result}")
-            
-            return jsonify({
-                "success": result,
-                "message": "Token exchange test completed",
-                "authenticated": services['spotify'].is_authenticated()
-            })
-        except Exception as e:
-            print(f"Error in test token exchange: {e}")
-            import traceback
-            print(f"Traceback: {traceback.format_exc()}")
-            return jsonify({"error": str(e)}), 500
     
     
     # Setup routes for each service
